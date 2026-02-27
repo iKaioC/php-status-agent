@@ -22,9 +22,6 @@ final class HostMetrics
         return (int) floor((float) $parts[0]);
     }
 
-    /**
-     * @return array{0: float, 1: float, 2: float}|null
-     */
     public static function loadAvg(): ?array
     {
         $content = @file_get_contents('/proc/loadavg');
@@ -36,9 +33,6 @@ final class HostMetrics
         return [(float) $parts[0], (float) $parts[1], (float) $parts[2]];
     }
 
-    /**
-     * @return array{total_mb:int, used_mb:int, free_mb:int}|null
-     */
     public static function memory(): ?array
     {
         $content = @file_get_contents('/proc/meminfo');
@@ -60,15 +54,11 @@ final class HostMetrics
         ];
     }
 
-    /**
-     * @return array{cores:int, model:string|null}|null
-     */
     public static function cpu(): ?array
     {
         $content = @file_get_contents('/proc/cpuinfo');
         if ($content === false) return null;
 
-        // cores = quantidade de "processor : N"
         preg_match_all('/^processor\s*:\s*\d+\s*$/m', $content, $m);
         $cores = isset($m[0]) ? count($m[0]) : 0;
 
@@ -85,9 +75,6 @@ final class HostMetrics
         ];
     }
 
-    /**
-     * @return array{total_mb:int, used_mb:int, free_mb:int}|null
-     */
     public static function swap(): ?array
     {
         $content = @file_get_contents('/proc/meminfo');
@@ -109,9 +96,6 @@ final class HostMetrics
         ];
     }
 
-    /**
-     * @return array<int, array{mount:string,total_gb:int,used_gb:int,free_gb:int}>|null
-     */
     public static function disks(): ?array
     {
         $output = @shell_exec('df -P -B1 2>/dev/null');
@@ -120,7 +104,7 @@ final class HostMetrics
         $lines = preg_split("/\r\n|\n|\r/", trim($output));
         if (!$lines || count($lines) < 2) return null;
 
-        array_shift($lines); // header
+        array_shift($lines);
 
         $disks = [];
 
@@ -138,7 +122,6 @@ final class HostMetrics
 
             if (str_starts_with($mount, '/snap/')) continue;
 
-            // "/" e "/mnt/<letra>" (WSL)
             if ($mount !== '/' && !preg_match('~^/mnt/[a-zA-Z]$~', $mount)) {
                 continue;
             }

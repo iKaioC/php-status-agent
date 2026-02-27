@@ -9,7 +9,7 @@ final class Auth
     public static function requireBearerToken(?string $expectedToken): void
     {
         if (!$expectedToken) {
-            return; // sem token configurado => aberto (dev)
+            return;
         }
 
         $header = self::getAuthorizationHeader();
@@ -29,7 +29,6 @@ final class Auth
 
     private static function getAuthorizationHeader(): ?string
     {
-        // PHP built-in server e alguns proxies usam chaves diferentes
         if (!empty($_SERVER['HTTP_AUTHORIZATION'])) return (string) $_SERVER['HTTP_AUTHORIZATION'];
         if (!empty($_SERVER['REDIRECT_HTTP_AUTHORIZATION'])) return (string) $_SERVER['REDIRECT_HTTP_AUTHORIZATION'];
 
