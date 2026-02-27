@@ -1,0 +1,20 @@
+# Dependencies
+/vendor/
+
+# Local environment files
+.env
+.env.*
+!.env.example
+
+# OS / editor stuff
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# Cache / logs
+*.log
+phpunit.xml
+phpunit.xml.dist
+.cache/
