@@ -54,15 +54,45 @@ curl -s http://127.0.0.1:9000/status | jq
 
 ---
 
+## Select fields (optional)
+
+You can request only specific sections using `?fields=`:
+
+* `?fields=cpu,memory`
+* `?fields=disk`
+* `?fields=all` (default)
+
+Example:
+
+```bash
+curl -s "http://127.0.0.1:9000/status?fields=cpu,memory" | jq
+```
+
+---
+
 ## Security note
 
 By default, the command above binds to **127.0.0.1**, meaning only your own machine can access it.
 
 ✅ This is the recommended mode for development.
 
-If you plan to expose this endpoint publicly (e.g. via Nginx or an open port), add authentication (token) and/or restrict access by IP first.
+If you plan to expose this endpoint publicly (e.g. via Nginx or an open port), protect it first.
 
-> Token authentication is planned for a next version.
+### Bearer token (recommended)
+
+Set an environment variable:
+
+```bash
+export STATUS_AGENT_TOKEN="change-me"
+```
+
+Then call the endpoint with:
+
+```bash
+curl -s -H "Authorization: Bearer change-me" http://127.0.0.1:9000/status
+```
+
+You can also restrict access by IP at the reverse proxy level (Nginx/Cloudflare).
 
 ---
 
@@ -106,8 +136,8 @@ If you plan to expose this endpoint publicly (e.g. via Nginx or an open port), a
 
 ## Roadmap
 
-* Token authentication (Bearer)
-* Select which fields to return (e.g. `?fields=cpu,memory`)
+* ✅ Token authentication (Bearer)
+* ✅ Select which fields to return (e.g. `?fields=cpu,memory`)
 * Service checks (nginx/php-fpm/mariadb)
 * HTTP checks (website status/latency)
 * Dockerfile + deploy examples

@@ -6,10 +6,17 @@ namespace StatusAgent\Security;
 
 final class Auth
 {
-    public static function requireBearerToken(?string $expectedToken): void
+    public static function requireBearerToken(?string $expectedToken, bool $allowOpen = false): void
     {
         if (!$expectedToken) {
-            return;
+            if ($allowOpen) {
+                return;
+            }
+
+            http_response_code(500);
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode(['ok' => false, 'error' => 'Misconfigured: STATUS_AGENT_TOKEN is required'], JSON_UNESCAPED_SLASHES);
+            exit;
         }
 
         $header = self::getAuthorizationHeader();

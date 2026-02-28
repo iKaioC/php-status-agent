@@ -1,18 +1,19 @@
 {
-  "name": "kaio/status-agent",
-  "description": "Framework-agnostic Linux VPS status agent: host metrics + checks + JSON endpoint.",
-  "type": "library",
-  "license": "MIT",
-  "require": {
-    "php": ">=8.1"
-  },
-  "autoload": {
-    "psr-4": {
-      "StatusAgent\\": "src/"
-    }
-  },
-  "require-dev": {
-    "phpunit/phpunit": "^10.0"
-  },
-  "minimum-stability": "stable"
+    "name": "kaio/status-agent",
+    "description": "Framework-agnostic Linux VPS status agent: host metrics + checks + JSON endpoint.",
+    "type": "library",
+    "license": "MIT",
+    "require": {
+        "php": ">=8.1",
+        "vlucas/phpdotenv": "^5.6"
+    },
+    "autoload": {
+        "psr-4": {
+            "StatusAgent\\": "src/"
+        }
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^10.0"
+    },
+    "minimum-stability": "stable"
 }
