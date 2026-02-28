@@ -1,6 +1,12 @@
 # PHP Status Agent
 
-A tiny, framework-agnostic PHP endpoint that exposes **host machine status** as JSON (Linux VPS/server/WSL):
+A tiny, framework-agnostic PHP status endpoint for Linux VPS/server/WSL.
+
+It exposes **host metrics** as JSON and ships with an optional zero-build dashboard.
+
+## What it provides
+
+Private (full) metrics:
 
 * hostname
 * uptime
@@ -10,7 +16,14 @@ A tiny, framework-agnostic PHP endpoint that exposes **host machine status** as 
 * swap
 * disk usage
 
-The goal is to be easy to run, easy to understand, and easy to integrate into any PHP project.
+Public (safe) overview:
+
+* uptime
+* load average
+* memory usage percent
+* disk `/` usage percent
+
+The goal is to be easy to run, easy to understand, and easy to embed into any PHP project.
 
 ---
 
@@ -21,86 +34,103 @@ The goal is to be easy to run, easy to understand, and easy to integrate into an
 
 ---
 
-## Run locally (recommended)
-
-Inside the project folder:
+## Install
 
 ```bash
 composer install
+```
+
+---
+
+## Run locally (recommended)
+
+```bash
 php -S 127.0.0.1:9000 public/index.php
 ```
 
 Open:
 
-* `http://127.0.0.1:9000/status`
+* Dashboard: `http://127.0.0.1:9000/`
+* Public JSON: `http://127.0.0.1:9000/public`
+* Private JSON: `http://127.0.0.1:9000/status`
 
 ---
 
-## Test with curl
+## Security defaults
 
-With the server running:
+`/status` is **protected by default**.
 
-```bash
-curl -s http://127.0.0.1:9000/status
+You must set `STATUS_AGENT_TOKEN` and call it using a Bearer token.
+
+Create a `.env` file (do not commit it):
+
+```env
+STATUS_AGENT_TOKEN=change-me
 ```
 
-Pretty print (optional):
-
-```bash
-curl -s http://127.0.0.1:9000/status | jq
-```
-
-> If you don't have `jq`, just remove `| jq`.
-
----
-
-## Select fields (optional)
-
-You can request only specific sections using `?fields=`:
-
-* `?fields=cpu,memory`
-* `?fields=disk`
-* `?fields=all` (default)
-
-Example:
-
-```bash
-curl -s "http://127.0.0.1:9000/status?fields=cpu,memory" | jq
-```
-
----
-
-## Security note
-
-By default, the command above binds to **127.0.0.1**, meaning only your own machine can access it.
-
-✅ This is the recommended mode for development.
-
-If you plan to expose this endpoint publicly (e.g. via Nginx or an open port), protect it first.
-
-### Bearer token (recommended)
-
-Set an environment variable:
-
-```bash
-export STATUS_AGENT_TOKEN="change-me"
-```
-
-Then call the endpoint with:
+Then:
 
 ```bash
 curl -s -H "Authorization: Bearer change-me" http://127.0.0.1:9000/status
 ```
 
-You can also restrict access by IP at the reverse proxy level (Nginx/Cloudflare).
+If `STATUS_AGENT_TOKEN` is missing, `/status` returns a JSON error to prevent accidental public exposure.
+
+### Optional: open `/status` (not recommended)
+
+For local experiments only, you can explicitly allow `/status` without a token:
+
+```env
+STATUS_AGENT_STATUS_OPEN=1
+```
 
 ---
 
-## Example response
+## Public endpoint
+
+`/public` is meant for embedding on public pages (limited fields, no sensitive details):
+
+```bash
+curl -s http://127.0.0.1:9000/public
+```
+
+---
+
+## Example responses
+
+### `/public`
 
 ```json
 {
   "ok": true,
+  "schema_version": 1,
+  "public": {
+    "uptime_seconds": 30148,
+    "uptime_human": "8h 22m",
+    "loadavg": [0.04, 0.12, 0.12],
+    "memory_percent": 25,
+    "memory": {
+      "used_percent": 25,
+      "used_bytes": 2055086080,
+      "total_bytes": 8299728896
+    },
+    "disk_root_percent": 1,
+    "disk_root": {
+      "used_percent": 1,
+      "used_bytes": 15997956096,
+      "total_bytes": 1081101176832
+    }
+  },
+  "timestamp": 1700000000
+}
+```
+
+### `/status`
+
+```json
+{
+  "ok": true,
+  "schema_version": 1,
   "host": {
     "hostname": "server-01",
     "uptime_seconds": 12345,
@@ -110,11 +140,19 @@ You can also restrict access by IP at the reverse proxy level (Nginx/Cloudflare)
       "model": "Example CPU Model"
     },
     "memory": {
-      "total_mb": 2048,
-      "used_mb": 900,
-      "free_mb": 1148
+      "total_bytes": 8589934592,
+      "used_bytes": 2147483648,
+      "free_bytes": 6442450944,
+      "used_percent": 25,
+      "total_mb": 8192,
+      "used_mb": 2048,
+      "free_mb": 6144
     },
     "swap": {
+      "total_bytes": 1073741824,
+      "used_bytes": 0,
+      "free_bytes": 1073741824,
+      "used_percent": 0,
       "total_mb": 1024,
       "used_mb": 0,
       "free_mb": 1024
@@ -122,6 +160,10 @@ You can also restrict access by IP at the reverse proxy level (Nginx/Cloudflare)
     "disk": [
       {
         "mount": "/",
+        "total_bytes": 42949672960,
+        "used_bytes": 12884901888,
+        "free_bytes": 30064771072,
+        "used_percent": 30,
         "total_gb": 40,
         "used_gb": 12,
         "free_gb": 28
@@ -132,15 +174,18 @@ You can also restrict access by IP at the reverse proxy level (Nginx/Cloudflare)
 }
 ```
 
+Notes:
+
+* For integrations, prefer the `*_bytes` and `used_percent` fields.
+* `*_mb` and `*_gb` are kept for compatibility.
+
 ---
 
-## Roadmap
+## Environment variables
 
-* ✅ Token authentication (Bearer)
-* ✅ Select which fields to return (e.g. `?fields=cpu,memory`)
-* Service checks (nginx/php-fpm/mariadb)
-* HTTP checks (website status/latency)
-* Dockerfile + deploy examples
+* `STATUS_AGENT_TOKEN` (required for `/status` unless you set open mode)
+* `STATUS_AGENT_STATUS_OPEN` (optional, default `0`)
+* `STATUS_AGENT_PUBLIC_REFRESH` (optional, dashboard refresh seconds; default `10`, min `3`, max `120`)
 
 ---
 
